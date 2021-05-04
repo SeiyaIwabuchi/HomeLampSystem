@@ -269,7 +269,7 @@ const unsigned long NTPintervalSec = 10;
 unsigned long NTPLastGetTime = 0; //前回の取得時刻
 void getTime()
 {
-  if (NTPLastGetTime + (NTPintervalSec * 1000) <= millis())
+  if (abs(millis() - NTPLastGetTime) >= NTPintervalSec * 1000 )
   {
     NTPLastGetTime = millis();
     time_t t = now();
@@ -385,10 +385,6 @@ void reboot()
 int nowState = 0;
 void loop()
 {
-  if (millis() >= 1000 * 60 * 60 * 24)
-  {
-    reboot();
-  }
   server.handleClient();
   MDNS.update();
   ArduinoOTA.handle();
@@ -427,13 +423,6 @@ void loop()
         ledState = "OFF_4";
       }
     }
-    // if((19 <= Hour && Hour < 24) || (0 <= Hour && Hour < 5)){
-    //   digitalWrite(4,HIGH);
-    //   ledState = "ON";
-    // }else{
-    //   digitalWrite(4,LOW);
-    //   ledState = "OFF";
-    // }
   }
   else
   {
