@@ -30,6 +30,7 @@ REST　APIで制御できるようにする。
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h>
 #include <ArduinoOTA.h>
+#include <FS.h>
 
 const char *ssid = "aterm-9ac1c7-g";
 const char *password = "9a8bd40c42d12";
@@ -167,85 +168,15 @@ void httpHandleSet()
 
 void handleRoot()
 {
-  String htmlStr = "";
-  htmlStr += "<!DOCTYPE html>\n";
-  htmlStr += "<html>\n";
-  htmlStr += "    <head>\n";
-  htmlStr += "        <meta charset=\"utf-8\">\n";
-  htmlStr += "    </head>\n";
-  htmlStr += "    <body>\n";
-  htmlStr += "        <p>動作モード</p>\n";
-  htmlStr += "        <input type=\"radio\" name=\"mode\" value=\"MODE_MANUAL\" checked>手動\n";
-  htmlStr += "        <input type=\"radio\" name=\"mode\" value=\"MODE_AUTO\">自動\n";
-  htmlStr += "        <br>\n";
-  htmlStr += "        <p>ライト状態</p>\n";
-  htmlStr += "        <input type=\"radio\" name=\"lightstate\" value=\"LIGHTSTATE_ON\">点灯\n";
-  htmlStr += "        <input type=\"radio\" name=\"lightstate\" value=\"LIGHTSTATE_OFF\">消灯\n";
-  htmlStr += "        <p>点灯時刻</p>\n";
-  htmlStr += "        <input type=\"time\" id=\"ontime\" disabled>\n";
-  htmlStr += "        <p>消灯時間</p>\n";
-  htmlStr += "        <input type=\"time\" id=\"offtime\" disabled>\n";
-  htmlStr += "        <p>オフタイマー</p>\n";
-  htmlStr += "        <input type=\"number\" id=\"offtimer\" placeholder=\"ミリ秒\" value=\"0\">　ミリ秒\n";
-  htmlStr += "        <br>\n";
-  htmlStr += "        <p>設定ボタン押下で設定情報を送信します。</p>\n";
-  htmlStr += "        <input type=\"button\" value=\"設定\" id=\"send\">\n";
-  htmlStr += "    </body>\n";
-  htmlStr += "    <script>\n";
-  htmlStr += "        //-------初期化--------\n";
-  htmlStr += "        var mode = \"MODE_MANUAL\";\n";
-  htmlStr += "        var lightstate = \"LIGHTSTATE_OFF\";\n";
-  htmlStr += "        var ontime = 0;\n";
-  htmlStr += "        var offtime = 0;\n";
-  htmlStr += "        var offtimer = 0;\n";
-  htmlStr += "        //---------------------\n";
-  htmlStr += "        document.getElementsByName(\"mode\").forEach((ele) => {\n";
-  htmlStr += "            ele.addEventListener(\"click\",()=>{\n";
-  htmlStr += "                var temp = false;\n";
-  htmlStr += "                if(ele.value == \"MODE_AUTO\"){\n";
-  htmlStr += "                    document.getElementsByName(\"lightstate\").forEach((ele) => {\n";
-  htmlStr += "                        temp = true;\n";
-  htmlStr += "                    });\n";
-  htmlStr += "                }else{\n";
-  htmlStr += "                    temp = false;\n";
-  htmlStr += "                }\n";
-  htmlStr += "                document.getElementsByName(\"lightstate\").forEach((ele) => {\n";
-  htmlStr += "                    ele.disabled = temp;\n";
-  htmlStr += "                });\n";
-  htmlStr += "                document.getElementById(\"ontime\").disabled = !temp;\n";
-  htmlStr += "                document.getElementById(\"offtime\").disabled = !temp;\n";
-  htmlStr += "                document.getElementById(\"offtimer\").disabled = temp;\n";
-  htmlStr += "            });\n";
-  htmlStr += "        });\n";
-  htmlStr += "        document.getElementById(\"send\").addEventListener(\"click\",() => {\n";
-  htmlStr += "            document.getElementsByName(\"mode\").forEach((ele) => {\n";
-  htmlStr += "                if(ele.checked) mode = ele.value;\n";
-  htmlStr += "            });\n";
-  htmlStr += "            document.getElementsByName(\"lightstate\").forEach((ele) => {\n";
-  htmlStr += "                if(ele.checked) lightstate = ele.value;\n";
-  htmlStr += "            });\n";
-  htmlStr += "            var t = document.getElementById(\"ontime\").value.split(\":\").map(v => parseInt(v));\n";
-  htmlStr += "            ontime = t[0] * 100 + t[1];\n";
-  htmlStr += "            t = document.getElementById(\"offtime\").value.split(\":\").map(v => parseInt(v));\n";
-  htmlStr += "            offtime = t[0] * 100 + t[1];\n";
-  htmlStr += "            offtimer = parseInt(document.getElementById(\"offtimer\").value);\n";
-  htmlStr += "            console.log(`http://192.168.1.145/set?mode=${mode}&lightstate=${lightstate}&ontime=${ontime}&offtime=${offtime}&offtimer=${offtimer}`);\n";
-  htmlStr += "            //fetch(`http://192.168.1.196/set?${}`)\n";
-  htmlStr += "            if(mode == \"MODE_AUTO\"){\n";
-  htmlStr += "                fetch(`http://192.168.1.145/set?mode=${mode}&ontime=${ontime}&offtime=${offtime}`,{\n";
-  htmlStr += "                    mode:\"no-cors\"\n";
-  htmlStr += "                })\n";
-  htmlStr += "                .then(res => console.log(res));\n";
-  htmlStr += "            }else{\n";
-  htmlStr += "                fetch(`http://192.168.1.145/set?mode=${mode}&lightstate=${lightstate}&offtimer=${offtimer}`,{\n";
-  htmlStr += "                    mode:\"no-cors\"\n";
-  htmlStr += "                })\n";
-  htmlStr += "                .then(res => console.log(res));\n";
-  htmlStr += "            }\n";
-  htmlStr += "        });\n";
-  htmlStr += "    </script>\n";
-  htmlStr += "</html>\n";
-  server.send(200, "text/html", htmlStr);
+//  String htmlStr = "";
+//  File index = SPIFFS.open("/index.html", "r");
+//  if(!index)
+//    server.send(500, "text/html", "internal server error");
+//  else{
+//    htmlStr = index.readString();
+//    index.close();
+//    server.send(200, "text/html", htmlStr);
+//    }
 }
 
 void handleNotFound()
@@ -269,7 +200,7 @@ const unsigned long NTPintervalSec = 10;
 unsigned long NTPLastGetTime = 0; //前回の取得時刻
 void getTime()
 {
-  if (abs(millis() - NTPLastGetTime) >= NTPintervalSec * 1000 )
+  if (abs((uint16_t)(millis() - NTPLastGetTime) >= NTPintervalSec * 1000 ))
   {
     NTPLastGetTime = millis();
     time_t t = now();
