@@ -1,1 +1,77 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="icon" href="/favicon.ico"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#000000"/><meta name="description" content="Web site created using create-react-app"/><link rel="apple-touch-icon" href="/logo192.png"/><link rel="manifest" href="/manifest.json"/><title>React App</title><script defer="defer" src="/static/js/main.02d8a239.js"></script></head><body><noscript>You need to enable JavaScript to run this app.</noscript><div id="root"></div></body></html>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+        <p>動作モード</p>
+        <input type="radio" name="mode" value="MODE_MANUAL" checked>手動
+        <input type="radio" name="mode" value="MODE_AUTO">自動
+        <br>
+        <p>ライト状態</p>
+        <input type="radio" name="lightstate" value="LIGHTSTATE_ON">点灯
+        <input type="radio" name="lightstate" value="LIGHTSTATE_OFF">消灯
+        <p>点灯時刻</p>
+        <input type="time" id="ontime" disabled>
+        <p>消灯時間</p>
+        <input type="time" id="offtime" disabled>
+        <p>オフタイマー</p>
+        <input type="number" id="offtimer" placeholder="ミリ秒" value="0">　ミリ秒
+        <br>
+        <p>設定ボタン押下で設定情報を送信します。</p>
+        <input type="button" value="設定" id="send">
+    </body>
+    <script>
+        //-------初期化--------
+        var mode = "MODE_MANUAL";
+        var lightstate = "LIGHTSTATE_OFF";
+        var ontime = 0;
+        var offtime = 0;
+        var offtimer = 0;
+        //---------------------
+        document.getElementsByName("mode").forEach((ele) => {
+            ele.addEventListener("click",()=>{
+                var temp = false;
+                if(ele.value == "MODE_AUTO"){
+                    document.getElementsByName("lightstate").forEach((ele) => {
+                        temp = true;
+                    });
+                }else{
+                    temp = false;
+                }
+                document.getElementsByName("lightstate").forEach((ele) => {
+                    ele.disabled = temp;
+                });
+                document.getElementById("ontime").disabled = !temp;
+                document.getElementById("offtime").disabled = !temp;
+                document.getElementById("offtimer").disabled = temp;
+            });
+        });
+        document.getElementById("send").addEventListener("click",() => {
+            document.getElementsByName("mode").forEach((ele) => {
+                if(ele.checked) mode = ele.value;
+            });
+            document.getElementsByName("lightstate").forEach((ele) => {
+                if(ele.checked) lightstate = ele.value;
+            });
+            var t = document.getElementById("ontime").value.split(":").map(v => parseInt(v));
+            ontime = t[0] * 100 + t[1];
+            t = document.getElementById("offtime").value.split(":").map(v => parseInt(v));
+            offtime = t[0] * 100 + t[1];
+            offtimer = parseInt(document.getElementById("offtimer").value);
+            console.log(`http://192.168.1.145/set?mode=${mode}&lightstate=${lightstate}&ontime=${ontime}&offtime=${offtime}&offtimer=${offtimer}`);
+            //fetch(`http://192.168.1.196/set?${}`)
+            if(mode == "MODE_AUTO"){
+                fetch(`http://192.168.1.145/set?mode=${mode}&ontime=${ontime}&offtime=${offtime}`,{
+                    mode:"no-cors"
+                })
+                .then(res => console.log(res));
+            }else{
+                fetch(`http://192.168.1.145/set?mode=${mode}&lightstate=${lightstate}&offtimer=${offtimer}`,{
+                    mode:"no-cors"
+                })
+                .then(res => console.log(res));
+            }
+        });
+    </script>
+</html>

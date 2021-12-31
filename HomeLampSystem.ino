@@ -168,15 +168,13 @@ void httpHandleSet()
 
 void handleRoot()
 {
-//  String htmlStr = "";
-//  File index = SPIFFS.open("/index.html", "r");
-//  if(!index)
-//    server.send(500, "text/html", "internal server error");
-//  else{
-//    htmlStr = index.readString();
-//    index.close();
-//    server.send(200, "text/html", htmlStr);
-//    }
+  File index = SPIFFS.open("/index.html", "r");
+  if(!index)
+    server.send(500, "text/html", "internal server error");
+  else{
+    server.send(200, "text/html", index.readString());
+    index.close();
+    }
 }
 
 void handleNotFound()
@@ -249,13 +247,17 @@ void setup()
   {
     Serial.println("MDNS responder started");
   }
-
+  Serial.println("came to -2");
   ntp_begin(2390); //ntp
-
+  Serial.println("came to -11");
   server.on("/", handleRoot);
+  Serial.println("came to 1");
   server.on("/reboot/", reboot);
+  Serial.println("came to 2");
   server.on("/set", httpHandleSet);
+  Serial.println("came to 3");
   server.onNotFound(handleNotFound);
+  Serial.println("came to 4");
   server.begin();
   Serial.println("ServerReady!");
 
@@ -306,6 +308,7 @@ void setup()
   Serial.println("Ready");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
+  SPIFFS.begin();
 }
 
 void reboot()
